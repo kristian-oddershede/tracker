@@ -1,0 +1,235 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Personal Time Pie • Private Tracker</title>
+  <!-- Chart.js CDN -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+  <style>
+    :root{
+      --bg: #0f1724;
+      --card: #0b1220;
+      --muted: #94a3b8;
+      --accent: #60a5fa;
+      --glass: rgba(255,255,255,0.03);
+      --card-2: #0c1420;
+      --success: #22c55e;
+    }
+    *{box-sizing:border-box;font-family:Inter,ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,"Helvetica Neue",Arial;}
+    html,body{height:100%;margin:0;background:#0f1724;color:#e6eef8;}
+    .wrap{max-width:920px;margin:36px auto;padding:20px; background: linear-gradient(180deg,#071021 0%, #071827 80%); border-radius:12px;}
+    header{display:flex;flex-direction:column;align-items:flex-start;gap:6px;margin-bottom:18px}
+    header h1{font-size:20px;margin:0}
+    header .small.muted{color:var(--muted);}
+    .card{background:linear-gradient(180deg, rgba(255,255,255,0.02), transparent);border-radius:12px;padding:16px;box-shadow:0 6px 18px rgba(2,6,23,0.6);border:1px solid rgba(255,255,255,0.03)}
+    .input-row{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+    input[type="text"]{flex:1;padding:10px 12px;border-radius:8px;border:1px solid rgba(255,255,255,0.04);background:var(--glass);color:inherit;min-width:160px;}
+    .num{width:84px;padding:10px;border-radius:8px;border:1px solid rgba(255,255,255,0.04);background:transparent;color:inherit;text-align:center}
+    button{background:var(--accent);border:none;color:#04233a;padding:10px 16px;border-radius:10px;cursor:pointer;font-weight:600}
+    button.ghost{background:transparent;border:1px solid rgba(255,255,255,0.06);color:var(--muted);padding:8px 12px}
+    .controls{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+    .chart-area{display:grid;grid-template-columns:1fr 260px;gap:14px;margin-top:14px}
+    @media(max-width:860px){ .chart-area{grid-template-columns:1fr} .right-col{order:3} }
+    .right-col{display:flex;flex-direction:column;gap:10px}
+    canvas{background:transparent;border-radius:8px}
+    .filter-row{display:flex;gap:8px;align-items:center;justify-content:flex-end}
+    .entries{max-height:260px;overflow:auto;padding:8px;border-radius:8px;background:rgba(0,0,0,0.06);border:1px dashed rgba(255,255,255,0.02)}
+    .entry{display:flex;justify-content:space-between;gap:10px;padding:8px;border-radius:8px;align-items:center}
+    .pill{background:rgba(255,255,255,0.03);padding:6px 10px;border-radius:999px;font-weight:600}
+    .muted{color:var(--muted);font-size:13px}
+    .top-meta{display:flex;gap:10px;align-items:center;justify-content:space-between;margin-bottom:10px}
+    .small{font-size:13px;color:var(--muted)}
+    .row{display:flex;gap:8px;align-items:center}
+    .linklike{background:transparent;border:none;color:var(--accent);cursor:pointer;text-decoration:underline;padding:0}
+    footer{margin-top:18px;text-align:center;color:var(--muted);font-size:13px; background: var(--card-2); padding:20px 0; border-radius:0 0 12px 12px;}
+    .summary{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+    .danger{background:#ff7878;color:#1b0b0b;padding:8px 10px;border-radius:8px;border:none;cursor:pointer}
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <header>
+      <div style="display:flex;align-items:center;gap:12px;">
+        <img src="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='36' height='36'><rect rx='8' width='36' height='36' fill='%2360a5fa'/><g fill='white' transform='translate(7,6)'><rect x='0' y='2' width='6' height='2' rx='1'/><rect x='8' y='0' width='6' height='8' rx='1'/><rect x='16' y='4' width='6' height='4' rx='1'/></g></svg>" alt="" style="width:36px;height:36px;border-radius:8px;"/>
+        <div>
+          <h1>Personal Time Pie</h1>
+          <div class="small muted">By Kristian Dahlmann Oddershede</div>
+          <div class="small muted">Quickly log time spent on tasks and visualize percantage (stored in your browser)</div>
+        </div>
+      </div>
+    </header>
+
+    <div class="card">
+      <div class="top-meta">
+        <div style="display:flex;gap:10px;align-items:center;">
+          <label style="font-weight:700">Log time</label>
+          <div class="muted">Enter an activity label and duration, then click Go</div>
+        </div>
+        <div class="summary">
+          <div class="small">Total entries: <span id="totalEntries">0</span></div>
+          <div class="small">Total time: <strong id="totalTime">0m</strong></div>
+        </div>
+      </div>
+
+      <div class="input-row" role="form" aria-label="Log time">
+        <input id="labelInput" type="text" placeholder='e.g. "Work" or "Workout" — press Enter or click Go' maxlength="80" />
+        <input id="hoursInput" class="num" type="number" min="0" max="168" value="0" aria-label="Hours" />
+        <input id="minsInput" class="num" type="number" min="0" max="59" value="30" aria-label="Minutes" />
+        <button id="goBtn">Go</button>
+
+        <div style="margin-left:auto" class="controls">
+          <button id="exportBtn" class="ghost">Export JSON</button>
+          <label class="ghost" style="padding:8px;border-radius:8px;display:inline-flex;align-items:center;cursor:pointer">
+            <input id="importFile" type="file" accept="application/json" style="display:none"/>
+            Import
+          </label>
+          <button id="clearBtn" class="ghost">Clear all</button>
+        </div>
+      </div>
+
+      <div class="chart-area">
+        <div>
+          <div style="display:flex;align-items:center;justify-content:space-between;">
+            <div style="display:flex;gap:8px;align-items:center">
+              <div class="small">View:</div>
+              <select id="viewSelect" class="num" style="width:auto">
+                <option value="24h">Last 24 hours</option>
+                <option value="all">All time</option>
+              </select>
+            </div>
+            <div class="filter-row">
+              <button id="refreshBtn" class="ghost">Refresh</button>
+            </div>
+          </div>
+
+          <div style="margin-top:12px" class="card" id="chartCard">
+            <canvas id="pieChart" width="400" height="300" aria-label="Time distribution pie chart"></canvas>
+          </div>
+        </div>
+
+        <div class="right-col">
+          <div class="card">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+              <div class="small">Entries</div>
+              <div class="muted small">click an entry to delete</div>
+            </div>
+            <div id="entries" class="entries" aria-live="polite"></div>
+          </div>
+
+          <div class="card">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+              <div class="small">Export / Backup</div>
+              <div class="muted small">download JSON or import</div>
+            </div>
+            <div style="display:flex;gap:8px;flex-direction:column">
+              <button id="downloadBtn" class="ghost">Download JSON file</button>
+              <button id="copyBtn" class="ghost">Copy JSON to clipboard</button>
+              <div class="muted small">Tip: create a private repo or gist on GitHub and save the exported JSON there for remote backup.</div>
+            </div>
+          </div>
+
+          <div class="card">
+            <div style="display:flex;justify-content:space-between;align-items:center">
+              <div>
+                <div class="small">Quick help</div>
+                <div class="muted small">Data is stored locally in your browser. Export to save externally.</div>
+              </div>
+              <button id="seedBtn" class="ghost">Add sample</button>
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </div>
+
+    <footer>
+      <div>Private time tracker • data saved locally (browser) • Hosted on GitHub Pages</div>
+    </footer>
+  </div>
+
+  <script>
+    /***********************
+     * Time Tracker Script *
+     ***********************/
+    const STORAGE_KEY = 'timeTrackerEntries_v1';
+    const colorPalette = {}; // label -> color
+
+    const $ = id => document.getElementById(id);
+    const nowISO = () => new Date().toISOString();
+
+    function loadEntries(){ try{ const raw = localStorage.getItem(STORAGE_KEY); return raw ? JSON.parse(raw) : []; } catch(e){ return []; } }
+    function saveEntries(arr){ localStorage.setItem(STORAGE_KEY, JSON.stringify(arr)); }
+
+    const labelInput = $('labelInput'), hoursInput = $('hoursInput'), minsInput = $('minsInput'), goBtn = $('goBtn'),
+          viewSelect = $('viewSelect'), entriesDiv = $('entries'), totalEntriesEl = $('totalEntries'),
+          totalTimeEl = $('totalTime'), refreshBtn = $('refreshBtn'), exportBtn = $('exportBtn'),
+          importFile = $('importFile'), downloadBtn = $('downloadBtn'), copyBtn = $('copyBtn'),
+          clearBtn = $('clearBtn'), seedBtn = $('seedBtn');
+
+    const ctx = $('pieChart').getContext('2d');
+    let pieChart = null;
+
+    function milliseconds(h=0,m=0){ return (h*60 + m) * 60 * 1000; }
+    function humanDuration(ms){ const minutes=Math.round(ms/60000); if(minutes<60)return minutes+'m'; const h=Math.floor(minutes/60), m=minutes%60; return m===0?h+'h':h+'h '+m+'m'; }
+
+    function addEntry(label,hours,minutes,timestamp=null){
+      if(!label||label.trim()==='')return;
+      const entry={ id:'e_'+Math.random().toString(36).slice(2,10), label:label.trim(), hours:Number(hours)||0, minutes:Number(minutes)||0, durationMs:milliseconds(Number(hours),Number(minutes)), ts: timestamp||nowISO() };
+      const all=loadEntries(); all.push(entry); saveEntries(all); renderAll(); highlightNewEntry(entry.id);
+    }
+    function highlightNewEntry(id){ setTimeout(()=>{ const el=document.querySelector('[data-id="'+id+'"]'); if(!el) return; el.style.transition='background 0.6s'; el.style.background='linear-gradient(90deg, rgba(96,165,250,0.08), rgba(96,165,250,0.02))'; setTimeout(()=>el.style.background='transparent',1400); },80); }
+    function deleteEntry(id){ saveEntries(loadEntries().filter(e=>e.id!==id)); renderAll(); }
+
+    function aggregate(entries){ const map=new Map(); entries.forEach(e=>map.set(e.label,(map.get(e.label)||0)+(e.durationMs||0))); return Array.from(map.entries()).map(([label,totalMs])=>({label,totalMs})).sort((a,b)=>b.totalMs-a.totalMs); }
+    function filterEntriesByView(allEntries){ const view=viewSelect.value; if(view==='24h'){ const cutoff=Date.now()-(24*60*60*1000); return allEntries.filter(e=>new Date(e.ts).getTime()>=cutoff);} return allEntries.slice(); }
+
+    function getColorForLabel(label){ if(colorPalette[label]) return colorPalette[label]; const hue=Math.floor(Math.random()*360); const color=`hsl(${hue},70%,50%)`; colorPalette[label]=color; return color; }
+
+    function renderChart(aggregated){
+      const labels=aggregated.map(a=>a.label), data=aggregated.map(a=>a.totalMs/60000), bgColors=aggregated.map(a=>getColorForLabel(a.label));
+      if(pieChart) pieChart.destroy();
+      pieChart=new Chart(ctx,{ type:'pie', data:{labels,datasets:[{data,backgroundColor:bgColors,borderColor:'rgba(0,0,0,0.2)',borderWidth:1}]}, options:{plugins:{tooltip:{callbacks:{label:ctx=>{const mins=Math.round(ctx.raw); if(mins<60)return `${ctx.label}: ${mins}m`; const h=Math.floor(mins/60), m=mins%60; return `${ctx.label}: ${h}h ${m}m`;}}}, legend:{position:'bottom',labels:{boxWidth:12,font:{size:12}}}} }});
+    }
+
+    function renderEntriesList(entries){
+      entriesDiv.innerHTML=''; if(entries.length===0){ entriesDiv.innerHTML='<div class="muted small" style="padding:10px">No entries yet</div>'; return; }
+      const sorted=entries.slice().sort((a,b)=>new Date(b.ts)-new Date(a.ts));
+      for(const e of sorted){
+        const el=document.createElement('div'); el.className='entry'; el.dataset.id=e.id; el.title='Click to delete this entry';
+        const left=document.createElement('div'); left.style.display='flex'; left.style.flexDirection='column'; left.style.gap='4px';
+        const labelWrap=document.createElement('div'); const pill=document.createElement('span'); pill.className='pill'; pill.textContent=e.label; labelWrap.appendChild(pill);
+        const meta=document.createElement('div'); meta.className='muted small'; meta.textContent=`${humanDuration(e.durationMs)} • ${new Date(e.ts).toLocaleString()}`;
+        left.appendChild(labelWrap); left.appendChild(meta);
+        const right=document.createElement('div'); right.style.display='flex'; right.style.alignItems='center'; right.style.gap='8px';
+        const del=document.createElement('button'); del.className='linklike'; del.textContent='Delete'; del.onclick=ev=>{ ev.stopPropagation(); if(!confirm('Delete this entry?')) return; deleteEntry(e.id); };
+        right.appendChild(del); el.appendChild(left); el.appendChild(right);
+        el.onclick=()=>{ if(confirm('Delete this entry?')) deleteEntry(e.id); };
+        entriesDiv.appendChild(el);
+      }
+    }
+
+    function renderAll(){ const all=loadEntries(); const filtered=filterEntriesByView(all); const aggregated=aggregate(filtered); renderChart(aggregated); renderEntriesList(all); totalEntriesEl.textContent=all.length; totalTimeEl.textContent=humanDuration(all.reduce((s,e)=>s+(e.durationMs||0),0)); }
+
+    goBtn.addEventListener('click',()=>{ const label=labelInput.value||''; const h=parseInt(hoursInput.value||'0',10); const m=parseInt(minsInput.value||'0',10); if(!label.trim()||(h===0&&m===0)){alert('Please enter a label and a duration (hours or minutes).'); return;} addEntry(label,h,m); labelInput.value=''; hoursInput.value='0'; minsInput.value='30'; labelInput.focus(); });
+    labelInput.addEventListener('keydown',ev=>{ if(ev.key==='Enter'){ ev.preventDefault(); goBtn.click(); } });
+    refreshBtn.addEventListener('click',renderAll); viewSelect.addEventListener('change',renderAll);
+
+    function getAllJSON(){ return JSON.stringify({exportedAt: nowISO(), entries: loadEntries()},null,2); }
+    downloadBtn.addEventListener('click',()=>{ const blob=new Blob([getAllJSON()],{type:'application/json'}); const url=URL.createObjectURL(blob); const a=document.createElement('a'); a.href=url; a.download='time-tracker-backup.json'; document.body.appendChild(a); a.click(); a.remove(); URL.revokeObjectURL(url); });
+    copyBtn.addEventListener('click',async()=>{ try{ await navigator.clipboard.writeText(getAllJSON()); alert('JSON copied to clipboard.'); } catch(e){ alert('Could not copy to clipboard — try "Download JSON" instead.'); } });
+    exportBtn.addEventListener('click',()=>{ downloadBtn.click(); });
+
+    importFile.addEventListener('change',ev=>{ const f=ev.target.files[0]; if(!f) return; const reader=new FileReader(); reader.onload=()=>{ try{ const parsed=JSON.parse(reader.result); if(!parsed.entries||!Array.isArray(parsed.entries)){alert('Invalid JSON'); return;} if(!confirm('Import will append entries from the file to your current data. Continue?')) return; const existing=loadEntries(); const clean=parsed.entries.map(e=>({id:e.id||'e_'+Math.random().toString(36).slice(2,10),label:String(e.label||'Unknown'),hours:Number(e.hours||0),minutes:Number(e.minutes||0),durationMs:Number(e.durationMs||milliseconds(Number(e.hours||0),Number(e.minutes||0))),ts:e.ts||nowISO()})); saveEntries(existing.concat(clean)); renderAll(); alert('Imported '+clean.length+' entries.'); } catch(err){ alert('Failed to parse JSON file.'); } }; reader.readAsText(f); ev.target.value=''; });
+
+    clearBtn.addEventListener('click',()=>{ if(confirm('Clear ALL data from this browser? This cannot be undone.')){ localStorage.removeItem(STORAGE_KEY); renderAll(); } });
+    seedBtn.addEventListener('click',()=>{ const base=Date.now(); addEntry('Work',2,30,new Date(base-(2*60*60*1000)).toISOString()); addEntry('Workout',1,0,new Date(base-(26*60*60*1000)).toISOString()); addEntry('Study',1,15,new Date(base-(6*60*60*1000)).toISOString()); addEntry('Reading',0,45,new Date(base-(20*60*60*1000)).toISOString()); });
+
+    window.addEventListener('paste',ev=>{ const text=(ev.clipboardData||window.clipboardData).getData('text'); if(!text) return; try{ const maybe=JSON.parse(text); if(maybe&&Array.isArray(maybe.entries)&&confirm('Detected time-tracker JSON in clipboard. Import? (it will be appended)')){ const existing=loadEntries(); const clean=maybe.entries.map(e=>({id:e.id||'e_'+Math.random().toString(36).slice(2,10),label:String(e.label||'Unknown'),hours:Number(e.hours||0),minutes:Number(e.minutes||0),durationMs:Number(e.durationMs||milliseconds(Number(e.hours||0),Number(e.minutes||0))),ts:e.ts||nowISO()})); saveEntries(existing.concat(clean)); renderAll(); alert('Imported '+clean.length+' entries from clipboard.'); } } catch(e){} });
+
+    renderAll();
+    labelInput.focus();
+    window.timeTracker={addEntry,loadEntries,saveEntries,STORAGE_KEY};
+  </script>
+</body>
+</html>
