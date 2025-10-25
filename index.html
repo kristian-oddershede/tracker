@@ -45,10 +45,9 @@
     .summary{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
     .danger{background:#ff7878;color:#1b0b0b;padding:8px 10px;border-radius:8px;border:none;cursor:pointer}
 
-    /* Styled dropdown to match site */
     #viewSelect {
       background: var(--glass);
-      color: inherit;
+      color: #e6eef8; /* makes text readable */
       border: 1px solid rgba(255,255,255,0.1);
       border-radius: 8px;
       padding: 6px 10px;
@@ -58,7 +57,7 @@
       appearance: none; /* remove default arrow */
       -webkit-appearance: none;
       -moz-appearance: none;
-      background-image: url("data:image/svg+xml;charset=US-ASCII,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='10' viewBox='0 0 10 10'%3E%3Cpolygon points='0,0 10,0 5,6' fill='%23fff'/%3E%3C/svg%3E");
+      background-image: url("data:image/svg+xml;charset=US-ASCII,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='10' viewBox='0 0 10 10'%3E%3Cpolygon points='0,0 10,0 5,6' fill='%23e6eef8'/%3E%3C/svg%3E");
       background-repeat: no-repeat;
       background-position: right 8px center;
       background-size: 10px 10px;
@@ -72,6 +71,13 @@
       outline: none;
       border-color: var(--accent);
       box-shadow: 0 0 0 2px rgba(96,165,250,0.2);
+    }
+    
+    /* Option styling for better readability */
+    #viewSelect option {
+      background: var(--card);
+      color: #e6eef8;
+      padding: 6px 10px;
     }
   </style>
 </head>
