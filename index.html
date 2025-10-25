@@ -25,7 +25,6 @@
     .card{background:linear-gradient(180deg, rgba(255,255,255,0.02), transparent);border-radius:12px;padding:16px;box-shadow:0 6px 18px rgba(2,6,23,0.6);border:1px solid rgba(255,255,255,0.03)}
     .input-row{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
     input[type="text"]{flex:1;padding:10px 12px;border-radius:8px;border:1px solid rgba(255,255,255,0.04);background:var(--glass);color:inherit;min-width:160px;}
-    .num{width:84px;padding:10px;border-radius:8px;border:1px solid rgba(255,255,255,0.04);background:transparent;color:inherit;text-align:center}
     button{background:var(--accent);border:none;color:#04233a;padding:10px 16px;border-radius:10px;cursor:pointer;font-weight:600}
     button.ghost{background:transparent;border:1px solid rgba(255,255,255,0.06);color:var(--muted);padding:8px 12px}
     .controls{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
@@ -51,20 +50,15 @@
   <div class="wrap">
     <header>
       <div style="display:flex;align-items:center;gap:12px;">
-        <img src="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='36' height='36'><rect rx='8' width='36' height='36' fill='%2360a5fa'/><g fill='white' transform='translate(7,6)'><rect x='0' y='2' width='6' height='2' rx='1'/><rect x='8' y='0' width='6' height='8' rx='1'/><rect x='16' y='4' width='6' height='4' rx='1'/></g></svg>" alt="" style="width:36px;height:36px;border-radius:8px;"/>
-        <div>
-          <h1>Personal Time Pie</h1>
-          <div class="small muted">By Kristian Dahlmann Oddershede</div>
-          <div class="small muted">Quickly log time spent on tasks and visualize percantage (stored in your browser)</div>
-        </div>
+        <h1>Personal Time Pie</h1>
+        <div class="small muted">By Kristian Dahlmann Oddershede</div>
       </div>
     </header>
 
     <div class="card">
       <div class="top-meta">
         <div style="display:flex;gap:10px;align-items:center;">
-          <label style="font-weight:700">Log time</label>
-          <div class="muted">Enter an activity label and duration, then click Go</div>
+          <label style="font-weight:700">Log activity</label>
         </div>
         <div class="summary">
           <div class="small">Total entries: <span id="totalEntries">0</span></div>
@@ -72,15 +66,15 @@
         </div>
       </div>
 
-      <div class="input-row" role="form" aria-label="Log time">
-        <input id="labelInput" type="text" placeholder='e.g. "Work" or "Workout" — press Enter or click Go' maxlength="80" />
-        <input id="hoursInput" class="num" type="number" min="0" max="168" value="0" aria-label="Hours" />
-        <input id="minsInput" class="num" type="number" min="0" max="59" value="30" aria-label="Minutes" />
-        <button id="goBtn">Go</button>
+      <div class="input-row" role="form" aria-label="Log activity">
+        <input id="labelInput" type="text" placeholder='Enter activity name' maxlength="80" />
+        <button id="startStopBtn">Start</button>
+
+        <div id="timerDisplay" class="small muted"></div>
 
         <div style="margin-left:auto" class="controls">
           <button id="exportBtn" class="ghost">Export JSON</button>
-          <label class="ghost" style="padding:8px;border-radius:8px;display:inline-flex;align-items:center;cursor:pointer">
+          <label class="ghost" style="padding:8px;border-radius:8px;display:inline-flex;align-items:center">
             <input id="importFile" type="file" accept="application/json" style="display:none"/>
             Import
           </label>
@@ -90,17 +84,13 @@
 
       <div class="chart-area">
         <div>
-          <div style="display:flex;align-items:center;justify-content:space-between;">
-            <div style="display:flex;gap:8px;align-items:center">
-              <div class="small">View:</div>
-              <select id="viewSelect" class="num" style="width:auto">
-                <option value="24h">Last 24 hours</option>
-                <option value="all">All time</option>
-              </select>
-            </div>
-            <div class="filter-row">
-              <button id="refreshBtn" class="ghost">Refresh</button>
-            </div>
+          <div class="filter-row">
+            <div class="small">View:</div>
+            <select id="viewSelect" class="num" style="width:auto">
+              <option value="24h">Last 24 hours</option>
+              <option value="all">All time</option>
+            </select>
+            <button id="refreshBtn" class="ghost">Refresh</button>
           </div>
 
           <div style="margin-top:12px" class="card" id="chartCard">
@@ -112,7 +102,6 @@
           <div class="card">
             <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
               <div class="small">Entries</div>
-              <div class="muted small">click an entry to delete</div>
             </div>
             <div id="entries" class="entries" aria-live="polite"></div>
           </div>
@@ -120,116 +109,188 @@
           <div class="card">
             <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
               <div class="small">Export / Backup</div>
-              <div class="muted small">download JSON or import</div>
             </div>
             <div style="display:flex;gap:8px;flex-direction:column">
               <button id="downloadBtn" class="ghost">Download JSON file</button>
               <button id="copyBtn" class="ghost">Copy JSON to clipboard</button>
-              <div class="muted small">Tip: create a private repo or gist on GitHub and save the exported JSON there for remote backup.</div>
             </div>
           </div>
-
-          <div class="card">
-            <div style="display:flex;justify-content:space-between;align-items:center">
-              <div>
-                <div class="small">Quick help</div>
-                <div class="muted small">Data is stored locally in your browser. Export to save externally.</div>
-              </div>
-              <button id="seedBtn" class="ghost">Add sample</button>
-            </div>
-          </div>
-
         </div>
       </div>
     </div>
 
     <footer>
-      <div>Private time tracker • data saved locally (browser) • Hosted on GitHub Pages</div>
+      <div>Private time tracker • data saved locally (browser) • Hosted on GitHub Pages works fine</div>
     </footer>
   </div>
 
-  <script>
-    /***********************
-     * Time Tracker Script *
-     ***********************/
-    const STORAGE_KEY = 'timeTrackerEntries_v1';
-    const colorPalette = {}; // label -> color
+<script>
+const STORAGE_KEY = 'timeTrackerEntries_v2';
+const colorPalette = {};
+const $ = id => document.getElementById(id);
 
-    const $ = id => document.getElementById(id);
-    const nowISO = () => new Date().toISOString();
+let currentActivity = null;
+let timerInterval = null;
 
-    function loadEntries(){ try{ const raw = localStorage.getItem(STORAGE_KEY); return raw ? JSON.parse(raw) : []; } catch(e){ return []; } }
-    function saveEntries(arr){ localStorage.setItem(STORAGE_KEY, JSON.stringify(arr)); }
+const labelInput = $('labelInput');
+const startStopBtn = $('startStopBtn');
+const timerDisplay = $('timerDisplay');
+const viewSelect = $('viewSelect');
+const entriesDiv = $('entries');
+const totalEntriesEl = $('totalEntries');
+const totalTimeEl = $('totalTime');
+const refreshBtn = $('refreshBtn');
+const exportBtn = $('exportBtn');
+const importFile = $('importFile');
+const downloadBtn = $('downloadBtn');
+const copyBtn = $('copyBtn');
+const clearBtn = $('clearBtn');
 
-    const labelInput = $('labelInput'), hoursInput = $('hoursInput'), minsInput = $('minsInput'), goBtn = $('goBtn'),
-          viewSelect = $('viewSelect'), entriesDiv = $('entries'), totalEntriesEl = $('totalEntries'),
-          totalTimeEl = $('totalTime'), refreshBtn = $('refreshBtn'), exportBtn = $('exportBtn'),
-          importFile = $('importFile'), downloadBtn = $('downloadBtn'), copyBtn = $('copyBtn'),
-          clearBtn = $('clearBtn'), seedBtn = $('seedBtn');
+const ctx = $('pieChart').getContext('2d');
+let pieChart = null;
 
-    const ctx = $('pieChart').getContext('2d');
-    let pieChart = null;
+// STORAGE
+function loadEntries(){ try{ const raw = localStorage.getItem(STORAGE_KEY); return raw ? JSON.parse(raw) : []; } catch(e){ return []; } }
+function saveEntries(arr){ localStorage.setItem(STORAGE_KEY, JSON.stringify(arr)); }
 
-    function milliseconds(h=0,m=0){ return (h*60 + m) * 60 * 1000; }
-    function humanDuration(ms){ const minutes=Math.round(ms/60000); if(minutes<60)return minutes+'m'; const h=Math.floor(minutes/60), m=minutes%60; return m===0?h+'h':h+'h '+m+'m'; }
+// UTIL
+function humanDuration(ms){ const minutes=Math.round(ms/60000); if(minutes<60)return minutes+'m'; const h=Math.floor(minutes/60), m=minutes%60; return m===0?h+'h':h+'h '+m+'m'; }
+function highlightNewEntry(id){ setTimeout(()=>{ const el=document.querySelector('[data-id="'+id+'"]'); if(!el) return; el.style.transition='background 0.6s'; el.style.background='linear-gradient(90deg, rgba(96,165,250,0.08), rgba(96,165,250,0.02))'; setTimeout(()=>el.style.background='transparent',1400); },80); }
 
-    function addEntry(label,hours,minutes,timestamp=null){
-      if(!label||label.trim()==='')return;
-      const entry={ id:'e_'+Math.random().toString(36).slice(2,10), label:label.trim(), hours:Number(hours)||0, minutes:Number(minutes)||0, durationMs:milliseconds(Number(hours),Number(minutes)), ts: timestamp||nowISO() };
-      const all=loadEntries(); all.push(entry); saveEntries(all); renderAll(); highlightNewEntry(entry.id);
-    }
-    function highlightNewEntry(id){ setTimeout(()=>{ const el=document.querySelector('[data-id="'+id+'"]'); if(!el) return; el.style.transition='background 0.6s'; el.style.background='linear-gradient(90deg, rgba(96,165,250,0.08), rgba(96,165,250,0.02))'; setTimeout(()=>el.style.background='transparent',1400); },80); }
-    function deleteEntry(id){ saveEntries(loadEntries().filter(e=>e.id!==id)); renderAll(); }
+// TIMER HANDLING
+function startActivity(){
+  const label = labelInput.value.trim();
+  if(!label){ alert('Enter an activity name.'); return; }
+  currentActivity = { id:'e_'+Math.random().toString(36).slice(2,10), label, startTs: new Date().toISOString() };
+  startStopBtn.textContent = 'Stop';
+  labelInput.disabled = true;
+  timerDisplay.textContent = '00:00';
+  timerInterval = setInterval(updateTimer, 1000);
+}
 
-    function aggregate(entries){ const map=new Map(); entries.forEach(e=>map.set(e.label,(map.get(e.label)||0)+(e.durationMs||0))); return Array.from(map.entries()).map(([label,totalMs])=>({label,totalMs})).sort((a,b)=>b.totalMs-a.totalMs); }
-    function filterEntriesByView(allEntries){ const view=viewSelect.value; if(view==='24h'){ const cutoff=Date.now()-(24*60*60*1000); return allEntries.filter(e=>new Date(e.ts).getTime()>=cutoff);} return allEntries.slice(); }
+function stopActivity(){
+  clearInterval(timerInterval);
+  currentActivity.endTs = new Date().toISOString();
+  currentActivity.durationMs = new Date(currentActivity.endTs) - new Date(currentActivity.startTs);
+  const all = loadEntries();
+  all.push(currentActivity);
+  saveEntries(all);
+  currentActivity = null;
+  startStopBtn.textContent = 'Start';
+  labelInput.disabled = false;
+  labelInput.value = '';
+  timerDisplay.textContent = '';
+  renderAll();
+}
 
-    function getColorForLabel(label){ if(colorPalette[label]) return colorPalette[label]; const hue=Math.floor(Math.random()*360); const color=`hsl(${hue},70%,50%)`; colorPalette[label]=color; return color; }
+function updateTimer(){
+  if(!currentActivity) return;
+  const elapsed = new Date() - new Date(currentActivity.startTs);
+  const mins = Math.floor(elapsed/60000); const secs = Math.floor((elapsed%60000)/1000);
+  timerDisplay.textContent = `${String(mins).padStart(2,'0')}:${String(secs).padStart(2,'0')}`;
+}
 
-    function renderChart(aggregated){
-      const labels=aggregated.map(a=>a.label), data=aggregated.map(a=>a.totalMs/60000), bgColors=aggregated.map(a=>getColorForLabel(a.label));
-      if(pieChart) pieChart.destroy();
-      pieChart=new Chart(ctx,{ type:'pie', data:{labels,datasets:[{data,backgroundColor:bgColors,borderColor:'rgba(0,0,0,0.2)',borderWidth:1}]}, options:{plugins:{tooltip:{callbacks:{label:ctx=>{const mins=Math.round(ctx.raw); if(mins<60)return `${ctx.label}: ${mins}m`; const h=Math.floor(mins/60), m=mins%60; return `${ctx.label}: ${h}h ${m}m`;}}}, legend:{position:'bottom',labels:{boxWidth:12,font:{size:12}}}} }});
-    }
+startStopBtn.addEventListener('click',()=>{
+  if(currentActivity) stopActivity(); else startActivity();
+});
 
-    function renderEntriesList(entries){
-      entriesDiv.innerHTML=''; if(entries.length===0){ entriesDiv.innerHTML='<div class="muted small" style="padding:10px">No entries yet</div>'; return; }
-      const sorted=entries.slice().sort((a,b)=>new Date(b.ts)-new Date(a.ts));
-      for(const e of sorted){
-        const el=document.createElement('div'); el.className='entry'; el.dataset.id=e.id; el.title='Click to delete this entry';
-        const left=document.createElement('div'); left.style.display='flex'; left.style.flexDirection='column'; left.style.gap='4px';
-        const labelWrap=document.createElement('div'); const pill=document.createElement('span'); pill.className='pill'; pill.textContent=e.label; labelWrap.appendChild(pill);
-        const meta=document.createElement('div'); meta.className='muted small'; meta.textContent=`${humanDuration(e.durationMs)} • ${new Date(e.ts).toLocaleString()}`;
-        left.appendChild(labelWrap); left.appendChild(meta);
-        const right=document.createElement('div'); right.style.display='flex'; right.style.alignItems='center'; right.style.gap='8px';
-        const del=document.createElement('button'); del.className='linklike'; del.textContent='Delete'; del.onclick=ev=>{ ev.stopPropagation(); if(!confirm('Delete this entry?')) return; deleteEntry(e.id); };
-        right.appendChild(del); el.appendChild(left); el.appendChild(right);
-        el.onclick=()=>{ if(confirm('Delete this entry?')) deleteEntry(e.id); };
-        entriesDiv.appendChild(el);
-      }
-    }
+// CHART
+function aggregate(entries){
+  const map = new Map();
+  entries.forEach(e => map.set(e.label, (map.get(e.label)||0) + (e.durationMs||0)));
+  return Array.from(map.entries()).map(([label,totalMs])=>({label,totalMs})).sort((a,b)=>b.totalMs-a.totalMs);
+}
+function filterEntriesByView(all){
+  if(viewSelect.value==='24h'){
+    const cutoff = Date.now()-(24*60*60*1000);
+    return all.filter(e=>new Date(e.startTs).getTime()>=cutoff);
+  }
+  return all.slice();
+}
+function getColorForLabel(label){
+  if(colorPalette[label]) return colorPalette[label];
+  const hue=Math.floor(Math.random()*360);
+  const color=`hsl(${hue},70%,50%)`;
+  colorPalette[label]=color;
+  return color;
+}
+function renderChart(aggregated){
+  const labels = aggregated.map(a=>a.label);
+  const data = aggregated.map(a=>a.totalMs/60000);
+  const bgColors = aggregated.map(a=>getColorForLabel(a.label));
+  if(pieChart) pieChart.destroy();
+  pieChart = new Chart(ctx,{
+    type:'pie',
+    data:{labels,datasets:[{data,backgroundColor:bgColors,borderColor:'rgba(0,0,0,0.2)',borderWidth:1}]},
+    options:{plugins:{tooltip:{callbacks:{label:ctx=>{const mins=Math.round(ctx.raw); if(mins<60)return `${ctx.label}: ${mins}m`; const h=Math.floor(mins/60), m=mins%60; return `${ctx.label}: ${h}h ${m}m`;}}}, legend:{position:'bottom',labels:{boxWidth:12,font:{size:12}}}}}
+  });
+}
 
-    function renderAll(){ const all=loadEntries(); const filtered=filterEntriesByView(all); const aggregated=aggregate(filtered); renderChart(aggregated); renderEntriesList(all); totalEntriesEl.textContent=all.length; totalTimeEl.textContent=humanDuration(all.reduce((s,e)=>s+(e.durationMs||0),0)); }
+// ENTRIES LIST
+function renderEntriesList(entries){
+  entriesDiv.innerHTML='';
+  if(entries.length===0){ entriesDiv.innerHTML='<div class="muted small" style="padding:10px">No entries yet</div>'; return; }
+  const sorted = entries.slice().sort((a,b)=>new Date(b.startTs)-new Date(a.startTs));
+  for(const e of sorted){
+    const el=document.createElement('div'); el.className='entry'; el.dataset.id=e.id;
+    const left=document.createElement('div'); left.style.display='flex'; left.style.flexDirection='column'; left.style.gap='4px';
+    const pill=document.createElement('span'); pill.className='pill'; pill.textContent=e.label;
+    left.appendChild(pill);
+    const meta=document.createElement('div'); meta.className='muted small'; meta.textContent=`${humanDuration(e.durationMs)} • ${new Date(e.startTs).toLocaleString()}`;
+    left.appendChild(meta);
+    const right=document.createElement('div');
+    const del=document.createElement('button'); del.className='linklike'; del.textContent='Delete';
+    del.onclick=ev=>{ ev.stopPropagation(); if(confirm('Delete this entry?')){ saveEntries(loadEntries().filter(x=>x.id!==e.id)); renderAll(); } };
+    right.appendChild(del);
+    el.appendChild(left); el.appendChild(right);
+    entriesDiv.appendChild(el);
+  }
+}
 
-    goBtn.addEventListener('click',()=>{ const label=labelInput.value||''; const h=parseInt(hoursInput.value||'0',10); const m=parseInt(minsInput.value||'0',10); if(!label.trim()||(h===0&&m===0)){alert('Please enter a label and a duration (hours or minutes).'); return;} addEntry(label,h,m); labelInput.value=''; hoursInput.value='0'; minsInput.value='30'; labelInput.focus(); });
-    labelInput.addEventListener('keydown',ev=>{ if(ev.key==='Enter'){ ev.preventDefault(); goBtn.click(); } });
-    refreshBtn.addEventListener('click',renderAll); viewSelect.addEventListener('change',renderAll);
+// RENDER ALL
+function renderAll(){
+  const all = loadEntries();
+  const filtered = filterEntriesByView(all);
+  const aggregated = aggregate(filtered);
+  renderChart(aggregated);
+  renderEntriesList(all);
+  totalEntriesEl.textContent = all.length;
+  totalTimeEl.textContent = humanDuration(all.reduce((s,e)=>s+(e.durationMs||0),0));
+}
 
-    function getAllJSON(){ return JSON.stringify({exportedAt: nowISO(), entries: loadEntries()},null,2); }
-    downloadBtn.addEventListener('click',()=>{ const blob=new Blob([getAllJSON()],{type:'application/json'}); const url=URL.createObjectURL(blob); const a=document.createElement('a'); a.href=url; a.download='time-tracker-backup.json'; document.body.appendChild(a); a.click(); a.remove(); URL.revokeObjectURL(url); });
-    copyBtn.addEventListener('click',async()=>{ try{ await navigator.clipboard.writeText(getAllJSON()); alert('JSON copied to clipboard.'); } catch(e){ alert('Could not copy to clipboard — try "Download JSON" instead.'); } });
-    exportBtn.addEventListener('click',()=>{ downloadBtn.click(); });
+// EXPORT / IMPORT
+function getAllJSON(){ return JSON.stringify({exportedAt: new Date().toISOString(), entries: loadEntries()}, null,2); }
+downloadBtn.addEventListener('click',()=>{ const blob=new Blob([getAllJSON()],{type:'application/json'}); const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download='time-tracker.json'; a.click(); });
+copyBtn.addEventListener('click',async()=>{ try{ await navigator.clipboard.writeText(getAllJSON()); alert('Copied JSON to clipboard'); } catch(e){ alert('Clipboard failed, try download'); } });
+exportBtn.addEventListener('click',()=>downloadBtn.click());
 
-    importFile.addEventListener('change',ev=>{ const f=ev.target.files[0]; if(!f) return; const reader=new FileReader(); reader.onload=()=>{ try{ const parsed=JSON.parse(reader.result); if(!parsed.entries||!Array.isArray(parsed.entries)){alert('Invalid JSON'); return;} if(!confirm('Import will append entries from the file to your current data. Continue?')) return; const existing=loadEntries(); const clean=parsed.entries.map(e=>({id:e.id||'e_'+Math.random().toString(36).slice(2,10),label:String(e.label||'Unknown'),hours:Number(e.hours||0),minutes:Number(e.minutes||0),durationMs:Number(e.durationMs||milliseconds(Number(e.hours||0),Number(e.minutes||0))),ts:e.ts||nowISO()})); saveEntries(existing.concat(clean)); renderAll(); alert('Imported '+clean.length+' entries.'); } catch(err){ alert('Failed to parse JSON file.'); } }; reader.readAsText(f); ev.target.value=''; });
+importFile.addEventListener('change',ev=>{
+  const f=ev.target.files[0]; if(!f) return;
+  const reader=new FileReader();
+  reader.onload=()=>{
+    try{
+      const parsed = JSON.parse(reader.result);
+      if(!parsed.entries || !Array.isArray(parsed.entries)){ alert('Invalid JSON'); return; }
+      if(!confirm('Import will append entries. Continue?')) return;
+      const all = loadEntries();
+      parsed.entries.forEach(e=>{ e.id = e.id||'e_'+Math.random().toString(36).slice(2,10); all.push(e); });
+      saveEntries(all); renderAll();
+    } catch(e){ alert('Failed to parse JSON'); }
+  };
+  reader.readAsText(f);
+  ev.target.value='';
+});
 
-    clearBtn.addEventListener('click',()=>{ if(confirm('Clear ALL data from this browser? This cannot be undone.')){ localStorage.removeItem(STORAGE_KEY); renderAll(); } });
-    seedBtn.addEventListener('click',()=>{ const base=Date.now(); addEntry('Work',2,30,new Date(base-(2*60*60*1000)).toISOString()); addEntry('Workout',1,0,new Date(base-(26*60*60*1000)).toISOString()); addEntry('Study',1,15,new Date(base-(6*60*60*1000)).toISOString()); addEntry('Reading',0,45,new Date(base-(20*60*60*1000)).toISOString()); });
+// CLEAR ALL
+clearBtn.addEventListener('click',()=>{ if(confirm('Clear ALL data from this browser?')){ localStorage.removeItem(STORAGE_KEY); renderAll(); } });
 
-    window.addEventListener('paste',ev=>{ const text=(ev.clipboardData||window.clipboardData).getData('text'); if(!text) return; try{ const maybe=JSON.parse(text); if(maybe&&Array.isArray(maybe.entries)&&confirm('Detected time-tracker JSON in clipboard. Import? (it will be appended)')){ const existing=loadEntries(); const clean=maybe.entries.map(e=>({id:e.id||'e_'+Math.random().toString(36).slice(2,10),label:String(e.label||'Unknown'),hours:Number(e.hours||0),minutes:Number(e.minutes||0),durationMs:Number(e.durationMs||milliseconds(Number(e.hours||0),Number(e.minutes||0))),ts:e.ts||nowISO()})); saveEntries(existing.concat(clean)); renderAll(); alert('Imported '+clean.length+' entries from clipboard.'); } } catch(e){} });
+// REFRESH & VIEW CHANGE
+refreshBtn.addEventListener('click',renderAll);
+viewSelect.addEventListener('change',renderAll);
 
-    renderAll();
-    labelInput.focus();
-    window.timeTracker={addEntry,loadEntries,saveEntries,STORAGE_KEY};
-  </script>
+// INIT
+renderAll();
+labelInput.focus();
+</script>
 </body>
 </html>
